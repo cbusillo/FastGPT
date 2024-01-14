@@ -190,5 +190,4 @@ cython_debug/
 
 node_modules
 hostnames
-llama.cpp
 models
