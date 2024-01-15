@@ -35,8 +35,8 @@ class CodeValidator:
 
         pylint_output = Run([str(temp_file_path)], exit=False)
 
-        error_count = pylint_output.linter.stats.get("error", 0)
-        warning_count = pylint_output.linter.stats.get("warning", 0)
+        error_count = pylint_output.linter.stats.error
+        warning_count = pylint_output.linter.stats.warning
         messages = [str(msg) for msg in pylint_output.linter.reporter.messages]
         temp_file_path.unlink()
         return error_count, warning_count, messages

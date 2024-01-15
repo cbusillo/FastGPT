@@ -2,7 +2,7 @@ import docker
 from docker.errors import ContainerError
 from docker.models.containers import Container
 
-from .config import DOCKER_HOST
+from config import DOCKER_HOST
 
 
 class DockerManager:

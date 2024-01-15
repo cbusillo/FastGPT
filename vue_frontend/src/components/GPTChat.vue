@@ -8,7 +8,9 @@
       </div>
       <!-- Second output area -->
       <div class="col-md-6 output-container">
-        <div class="output-code" ref="outputCodeContainer" v-html="outputCodeText"></div>
+        <div class="output-code" ref="outputCodeContainer">
+          <pre>{{ outputCodeText }}</pre>
+        </div>
       </div>
     </div>
 
@@ -27,10 +29,13 @@
   </div>
 </template>
 
-
 <script>
+
 import hljs from "highlight.js";
-import "highlight.js/styles/atom-one-dark.css";
+import 'highlight.js/styles/stackoverflow-dark.css'
+import CopyButtonPlugin from 'highlightjs-copy';
+
+hljs.addPlugin(new CopyButtonPlugin());
 
 export default {
   data() {
@@ -44,23 +49,6 @@ export default {
     };
   },
   methods: {
-    appendOutputText(text) {
-      this.outputText += text;
-      this.$nextTick(() => {
-        if (this.$refs.outputContainer) {
-          this.$refs.outputContainer.scrollTop = this.$refs.outputContainer.scrollHeight;
-        }
-      });
-    },
-
-    appendOutputCodeText(text) {
-      this.outputCodeText += text;
-      this.$nextTick(() => {
-        if (this.$refs.outputCodeContainer) {
-          this.$refs.outputCodeContainer.scrollTop = this.$refs.outputCodeContainer.scrollHeight;
-        }
-      });
-    },
     async sendTestPrompt() {
       this.prompt = "Write a python program to get fives jokes from a public api.  Use only built in libraries.  Make sure the indentation is correct for Python.  Do not use example.com";
       await this.sendPrompt();
@@ -81,7 +69,7 @@ export default {
               this.outputCodeText += '\n\n';
             }
             this.outputCodeText += data.code;
-            this.scrollOutputCodeToBottom();
+            this.scrollToBottom(this.$refs.outputCodeContainer)
           }
           if (data.completed) {
             this.outputCompleted = true;
@@ -89,7 +77,7 @@ export default {
           } else {
             if (data.response) {
               this.outputText += data.response;
-              this.scrollOutputToBottom();
+              this.scrollToBottom(this.$refs.outputContainer)
             }
           }
         };
@@ -130,23 +118,16 @@ export default {
         if (this.outputCompleted) {
           const blocks = this.$refs.outputContainer.querySelectorAll('pre code');
           blocks.forEach((block) => {
-            hljs.highlightBlock(block);
+            hljs.highlightElement(block);
           });
         }
       });
     },
-    scrollOutputToBottom() {
+    scrollToBottom() {
       this.$nextTick(() => {
-        if (this.$refs.outputContainer) {
-          this.$refs.outputContainer.scrollTop = this.$refs.outputContainer.scrollHeight;
-        }
-      });
-    },
-
-    scrollOutputCodeToBottom() {
-      this.$nextTick(() => {
-        if (this.$refs.outputCodeContainer) {
-          this.$refs.outputCodeContainer.scrollTop = this.$refs.outputCodeContainer.scrollHeight;
+        const container = this.$refs.output;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
         }
       });
     },
@@ -172,29 +153,6 @@ export default {
       if (newVal) {
         this.applyHighlighting();
       }
-    },
-    outputText(newValue, oldValue) {
-      this.$nextTick(() => {
-        const outputContainer = this.$refs.outputContainer;
-        if (outputContainer) {
-          outputContainer.scrollTop = outputContainer.scrollHeight;
-        }
-      });
-    },
-    outputCodeText(newValue, oldValue) {
-      this.$nextTick(() => {
-        const outputCodeContainer = this.$refs.outputCodeContainer;
-        if (outputCodeContainer) {
-          outputCodeContainer.scrollTop = outputCodeContainer.scrollHeight;
-        }
-      });
-    }
-  },
-  directives: {
-    'scrollBottom': {
-      updated(el) {
-        el.scrollTop = el.scrollHeight;
-      }
     }
   },
   mounted() {
@@ -212,7 +170,8 @@ export default {
 }
 
 .output, .output-code {
-  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 100%;
 }
 
 .output pre {

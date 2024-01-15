@@ -1,6 +1,6 @@
 import os
 
-DEFAULT_LLM_API_NAME = "llama"
+DEFAULT_LLM_API_NAME = "llama.cpp"
 
 DOCKER_HOST = "tcp://docker.local:2375"
 LLM_APIS = {
@@ -9,9 +9,9 @@ LLM_APIS = {
         "model": "gpt-4",
         "key": os.environ["OPENAI_API_KEY"],
     },
-    "llama": {
+    "llama.cpp": {
         "url": "http://localhost:8080/v1",
-        "model": "deepseek-coder-33b",
+        "model": "phind-codellama-34",
         "key": "sk-2f2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
     },
 }
@@ -19,7 +19,9 @@ LLM_APIS = {
 SYSTEM_MESSAGE = {
     "python": {
         "role": "system",
-        "content": "You are a smart and friendly AGI. You are especially an extremely good programmer.  Please follow the instructions and provide all code asked for in a code block.  Do not test, analyze, or run the code. ",
+        "content": "You are a smart and friendly AGI. You are especially an extremely good programmer.  \
+        Please follow the instructions and provide all code asked for in a code block.  Do not test, \
+        analyze, or run the code. Please put the langauge you are using in the first line of the code block. ",
     }
 }
 

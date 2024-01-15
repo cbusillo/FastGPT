@@ -1,15 +1,27 @@
+import logging
+import os
+import subprocess
+from glob import glob
+from pathlib import Path
 from typing import Generator
 
 import openai
+import requests
 from transformers import GPT2Tokenizer
 
-from .config import LLM_APIS, SYSTEM_MESSAGE, MAX_TOKENS, DEFAULT_LLM_API_NAME
+from config import LLM_APIS, SYSTEM_MESSAGE, MAX_TOKENS, DEFAULT_LLM_API_NAME
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
     def __init__(self, llm_api_name: str = DEFAULT_LLM_API_NAME) -> None:
         self.llm_api = LLM_APIS[llm_api_name]
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
+        if llm_api_name == "llama.cpp":
+            self.check_and_start_local_server()
+
         self.client = openai.OpenAI(
             base_url=self.llm_api["url"], api_key=self.llm_api["key"]
         )
@@ -43,3 +55,28 @@ class LLMClient:
     @staticmethod
     def _get_system_message(language: str = "python") -> dict[str, str]:
         return SYSTEM_MESSAGE[language]
+
+    def check_and_start_local_server(self) -> None:
+        url = self.llm_api["url"]
+        try:
+            requests.get(f"{url}/health")
+        except requests.exceptions.ConnectionError:
+            script_path = Path(__file__).parent
+            project_root = script_path.parent.absolute()
+            server_binary = project_root / "external" / "llama.cpp" / "server"
+            model_pattern = str(
+                project_root
+                / "models"
+                / (self.llm_api["model"] + "*" + "Q4" + "*.gguf")
+            )
+
+            if len(model_pattern) == 0:
+                raise FileNotFoundError(
+                    f"Model file not found for {self.llm_api['model']}"
+                )
+            model_file = glob(model_pattern)[0]
+            command = [server_binary, "-m", model_file]
+            logger.error(
+                f"Starting local server using '{' '.join(str(text) for text in command)}'"
+            )
+            subprocess.Popen(command)

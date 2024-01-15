@@ -1,10 +1,12 @@
+import logging
+
 from fastapi import FastAPI, WebSocket
 from starlette.middleware.cors import CORSMiddleware
 from asyncio import sleep
 
-from .llm_communication import LLMClient
-from .docker_interaction import DockerManager
-from .code_validation import CodeValidator
+from llm_communication import LLMClient
+from docker_interaction import DockerManager
+from code_validation import CodeValidator
 
 app = FastAPI()
 # noinspection PyTypeChecker
@@ -17,6 +19,9 @@ app.add_middleware(
 
 llm_client = LLMClient()
 docker_manager = DockerManager()
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 @app.websocket("/generate")
