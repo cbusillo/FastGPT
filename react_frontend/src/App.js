@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import DarkModeToggle from './components/DarkModeToggle';
 import FastGPTChat from './components/FastGPTChat';
+import ModelSelector from './components/ModelSelector';
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -28,6 +29,7 @@ function App() {
         alignItems: 'center',
         width: '100%'
       }}>
+        <ModelSelector sx={{width: '40%'}}/>
         <Box sx={{flex: 1, textAlign: 'center'}}>
           <Typography variant="h6">Welcome to FastGPT</Typography>
         </Box>

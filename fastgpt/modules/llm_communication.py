@@ -7,14 +7,14 @@ import openai
 import requests
 from transformers import GPT2Tokenizer
 
-from config import DEFAULT_LLM_API_NAME, LLM_APIS, MAX_TOKENS, SYSTEM_MESSAGE
+from config import LLM_APIS, MAX_TOKENS, SYSTEM_MESSAGE
 from .logging_config import setup_logging
 
 logger = setup_logging(__name__)
 
 
 class LLMClient:
-    def __init__(self, llm_api_name: str = DEFAULT_LLM_API_NAME) -> None:
+    def __init__(self, llm_api_name: str = list(LLM_APIS.keys())[0]) -> None:
         self.llm_api = LLM_APIS[llm_api_name]
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
@@ -78,3 +78,8 @@ class LLMClient:
                 f"Starting local server using '{' '.join(str(text) for text in command)}'"
             )
             subprocess.Popen(command)
+
+    @staticmethod
+    def get_model_names() -> list[str]:
+        for model_name in LLM_APIS.keys():
+            yield model_name

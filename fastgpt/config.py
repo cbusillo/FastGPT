@@ -1,19 +1,17 @@
 import os
 
-DEFAULT_LLM_API_NAME = "llama.cpp"
-
 DOCKER_HOST = "tcp://docker.local:2375"
 # noinspection SpellCheckingInspection
 LLM_APIS = {
-    "openai": {
-        "url": "https://api.openai.com/v1",
-        "model": "gpt-4",
-        "key": os.environ["OPENAI_API_KEY"],
-    },
     "llama.cpp": {
         "url": "http://localhost:8080/v1",
         "model": "phind-codellama-34",
         "key": "sk-2f2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+    },
+    "openai": {
+        "url": "https://api.openai.com/v1",
+        "model": "gpt-4",
+        "key": os.environ["OPENAI_API_KEY"],
     },
 }
 

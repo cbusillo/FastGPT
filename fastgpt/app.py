@@ -1,8 +1,7 @@
 # app.py
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
 from asyncio import sleep
 
-from starlette.websockets import WebSocketDisconnect
 
 # noinspection PyUnresolvedReferences
 from config import test_input
@@ -23,18 +22,20 @@ SLEEP_DURATION = 0.00001
 
 
 @app.websocket("/generate")
-async def websocket_generate(websocket: WebSocket) -> None:
+async def websocket_generate(
+    websocket: WebSocket, background_tasks: BackgroundTasks
+) -> None:
     await websocket.accept()
+    background_tasks.add_task(docker_manager.start_container)
     try:
         await process_websocket(websocket)
     except WebSocketDisconnect:
         logger.info("Client disconnected")
     finally:
-        docker_manager.remove_container()
+        background_tasks.add_task(docker_manager.remove_container)
 
 
 async def process_websocket(websocket: WebSocket) -> None:
-    docker_manager.start_container()
     while True:
         data = await websocket.receive_json()
         prompt_text = data.get("prompt", "")
@@ -87,3 +88,8 @@ async def execute_and_send_code(websocket: WebSocket, code: str) -> None:
     docker_output = docker_manager.execute_python(code)
     await websocket.send_json({"code": docker_output})
     await sleep(SLEEP_DURATION)
+
+
+@app.get("/models")
+async def get_models() -> dict[str, list[str]]:
+    return {"models": llm_client.get_model_names()}
