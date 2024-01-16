@@ -1,5 +1,3 @@
-import logging
-import os
 import subprocess
 from glob import glob
 from pathlib import Path
@@ -9,9 +7,10 @@ import openai
 import requests
 from transformers import GPT2Tokenizer
 
-from config import LLM_APIS, SYSTEM_MESSAGE, MAX_TOKENS, DEFAULT_LLM_API_NAME
+from config import DEFAULT_LLM_API_NAME, LLM_APIS, MAX_TOKENS, SYSTEM_MESSAGE
+from .logging_config import setup_logging
 
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 
 class LLMClient:
@@ -22,11 +21,11 @@ class LLMClient:
         if llm_api_name == "llama.cpp":
             self.check_and_start_local_server()
 
-        self.client = openai.OpenAI(
+        self.client = openai.AsyncOpenAI(
             base_url=self.llm_api["url"], api_key=self.llm_api["key"]
         )
 
-    def send_prompt(
+    async def send_prompt(
         self, prompt_text: str, max_tokens: int = MAX_TOKENS
     ) -> Generator[str, None, None]:
         try:
@@ -40,17 +39,16 @@ class LLMClient:
 
             adjusted_max_tokens = max_tokens - num_tokens_used
 
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.llm_api["model"],
                 messages=[system_message, user_message],
                 max_tokens=adjusted_max_tokens,
                 stream=True,
             )
-            for chunk in response:
+            async for chunk in response:
                 yield chunk.choices[0].delta.content
         except Exception as e:
             print(f"Error in sending prompt: {e}")
-            return None
 
     @staticmethod
     def _get_system_message(language: str = "python") -> dict[str, str]:

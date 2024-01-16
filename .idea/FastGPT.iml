@@ -3,9 +3,9 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/fastgpt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/react_frontend" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/external/llama.cpp" />
-      <excludeFolder url="file://$MODULE_DIR$/react_frontend/node_modules" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

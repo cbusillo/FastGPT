@@ -1,24 +1,40 @@
-import logo from './logo.svg';
-import './App.css';
+import React, {useState} from 'react';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import DarkModeToggle from './components/DarkModeToggle';
+import FastGPTChat from './components/FastGPTChat';
 
 function App() {
+  const [darkMode, setDarkMode] = useState(true);
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+    },
+  });
+
+  const handleThemeChange = () => {
+    setDarkMode(!darkMode);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline/>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%'
+      }}>
+        <Box sx={{flex: 1, textAlign: 'center'}}>
+          <Typography variant="h6">Welcome to FastGPT</Typography>
+        </Box>
+        <DarkModeToggle onChange={handleThemeChange} checked={darkMode}/>
+      </Box>
+      <FastGPTChat/>
+    </ThemeProvider>
   );
 }
 
