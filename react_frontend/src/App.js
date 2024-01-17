@@ -1,15 +1,15 @@
 import React, {useState} from 'react';
 import {ThemeProvider, createTheme} from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import DarkModeToggle from './components/DarkModeToggle';
 import FastGPTChat from './components/FastGPTChat';
-import ModelSelector from './components/ModelSelector';
+import {FormControlLabel} from "@mui/material";
+import Switch from "@mui/material/Switch";
+import Box from "@mui/material/Box";
+
 
 function App() {
   const [darkMode, setDarkMode] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('');
+
 
   const theme = createTheme({
     palette: {
@@ -24,20 +24,18 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline/>
+      {/* Header with Dark Mode Toggle */}
       <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%'
+        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width:
+          '100%', padding: 0
       }}>
-
-        <ModelSelector selectedModel={selectedModel} setSelectedModel={setSelectedModel}/>
-        <Box sx={{flex: 1, textAlign: 'center'}}>
-          <Typography variant="h6">Welcome to FastGPT</Typography>
-        </Box>
-        <DarkModeToggle onChange={handleThemeChange} checked={darkMode}/>
+        <FormControlLabel
+          control={<Switch checked={darkMode} onChange={handleThemeChange} name="darkMode"/>}
+          label={"Dark"}
+        />
       </Box>
-      <FastGPTChat models={selectedModel}/>
+      {/* Main Content */}
+      <FastGPTChat/>
     </ThemeProvider>
   );
 }

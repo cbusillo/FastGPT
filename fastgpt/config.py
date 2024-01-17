@@ -37,64 +37,33 @@ SYSTEM_MESSAGE = {
 
 MAX_TOKENS = 4096  # oops 1024 * 1024 * 128
 
-# noinspection LongLine,HttpUrlsUsage
-test_input = """
-This task could be accomplished using Python with Requests and Beautiful Soup (for web scraping) alongside the OpenWeather helper modules. Although public APIs to get the largest cities are not readily available, we can use Beautiful Soup to scrape from a wikipedia page holding this list. For weather, we will use the OpenWeatherMap API.
-
-The code below first scrapes the 5 largest cities from wikipedia, then uses its names to gather weather data from OpenWeatherMap API.
-
-NOTE: You would have to sign up on openweathermap.org and get your own API key, as it is specific to each user and then replace `YOUR_OPEN_WEATHER_API_KEY` with your own OpenWeatherMap API key.
-
-Also, as the task explicitly mentions not to test, analyze or run the code, it's provided as is. However, BeautifulSoup implements methods to select specific elements in webpage, which may include select(), select_one(), find(), find_all() etc, so the method used below to select city names may change based on the structure of the webpage.
-
-
-```
-python
+# noinspection LongLine,HttpUrlsUsage,SpellCheckingInspection
+TEST_INPUT = """
+```python
+import random
+import statistics
 import requests
-from bs4 import BeautifulSoup
-import json
 
-# URL for the wiki page about the world's largest cities
-url = 'https://en.wikipedia.org/wiki/List_of_largest_cities'
+try:
+    # Generate a list of 100 random integers between 1 and 100000
+    numbers = [random.randint(1, 100000) for _ in range(100)]
+    
+    print("Generated numbers:")
+    print(numbers)
 
-# send a GET request to the URL
-response = requests.get(url)
+    # Calculate mean of the numbers
+    mean_num = statistics.mean(numbers)
+    print("Mean:", mean_num)
 
-# parse the content with BeautifulSoup
-soup = BeautifulSoup(response.content, 'html.parser')
+    # Calculate median of the numbers
+    median_num = statistics.median(numbers)
+    print("Median:", median_num)
 
-# find the table in the HTML that contains the cities
-table = soup.find('table', {'class': 'wikitable sortable'})
+    # Calculate standard deviation of the numbers
+    std_dev_num = statistics.stdev(numbers)
+    print("Standard Deviation:", std_dev_num)
 
-# find all the rows within the table
-rows = table.find_all('tr')
-
-# list to store cities
-cities = []
-
-# iterate over the rows
-for row in rows[1:6]:  # get first 5 rows excluding headings
-    city_name = row.find('a').text  # get city name
-    cities.append(city_name)
-
-# OpenWeatherMap API url
-api_url = 'http://api.openweathermap.org/data/2.5/weather'
-
-# iterate over cities to get their weather info
-for city in cities:
-    parameters = {
-        'q': city,
-        'appid': 'YOUR_OPEN_WEATHER_API_KEY'
-    }
-    city_response = requests.get(api_url, params=parameters)
-
-    if city_response.status_code == 200:  # status code 200 indicates success
-        # parse the response from JSON into a Python dictionary
-        city_weather = json.loads(city_response.text)
-        print(f"Weather in {city}: {city_weather['weather'][0]['description']}")
-    else:
-        print(f"Couldn't get weather information for {city}. Check city name or Open Weather API key.")
+except Exception as e:
+    print("An error occurred:", str(e))
 ```
-Please consider that web scraping Wikipedia or any other site must comply with their terms of service. For robustness and reliability, a dedicated API or dataset is recommended for such tasks. The OpenWeatherMap API is also subjected to limitations in free plan (e.g., a limited number of requests per minute).
-
 """

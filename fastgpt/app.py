@@ -7,7 +7,7 @@ from asyncio import sleep
 from websockets import ConnectionClosedOK
 
 # noinspection PyUnresolvedReferences
-from config import test_input
+from config import TEST_INPUT
 from modules.llm_communication import LLMClient
 from modules.docker_interaction import DockerManager
 from modules.code_validation import CodeValidator
@@ -28,7 +28,6 @@ SLEEP_DURATION = 0.00001
 async def websocket_generate(websocket: WebSocket) -> None:
     await websocket.accept()
     threading.Thread(target=docker_manager.start_container).start()
-    await sleep(10)
     try:
         await process_websocket(websocket)
     except WebSocketDisconnect:
@@ -44,21 +43,29 @@ async def process_websocket(websocket: WebSocket) -> None:
         data = await websocket.receive_json()
         prompt_text = data.get("prompt", "")
         model_name = data.get("model", "")
-        await process_prompt(websocket, prompt_text, model_name=model_name)
+        test_input = data.get("test_input", "")
+        await process_prompt(
+            websocket, prompt_text, model_name=model_name, test_input=test_input
+        )
 
 
 async def process_prompt(
-    websocket: WebSocket, prompt_text: str, model_name: str
+    websocket: WebSocket, prompt_text: str, model_name: str, test_input: bool
 ) -> None:
-    response_generator = llm_client.send_prompt(prompt_text, model_name)
-    full_response = ""
-    async for chunk in response_generator:
-        if not chunk:
-            continue
-        full_response += chunk
-        await websocket.send_json({"response": chunk})
+    if test_input:
+        full_response = TEST_INPUT
+        await websocket.send_json({"response": full_response})
         await sleep(SLEEP_DURATION)
-    # full_response = Config.test_input
+    else:
+        response_generator = llm_client.send_prompt(prompt_text, model_name)
+        full_response = ""
+        async for chunk in response_generator:
+            if not chunk:
+                continue
+            full_response += chunk
+            await websocket.send_json({"response": chunk})
+            await sleep(SLEEP_DURATION)
+
     await process_code_blocks(websocket, full_response)
 
 
@@ -74,11 +81,8 @@ async def process_code_block(websocket: WebSocket, code_block: str) -> None:
     if CodeValidator.is_valid_python(code_block):
         formatted_code = CodeValidator.format_with_black(code_block)
         code_imports = CodeValidator.extract_python_imports(formatted_code)
-        code_imports = [
-            import_name.replace("BeautifulSoup", "BeautifulSoup4")
-            for import_name in code_imports
-        ]
         pip_output = docker_manager.execute_pip_install(code_imports)
+        await sleep(SLEEP_DURATION)
         await websocket.send_json({"code": pip_output})
         error_count, warning_count, messages = CodeValidator.run_pylint_static_analysis(
             formatted_code

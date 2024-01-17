@@ -34,8 +34,7 @@ const ModelSelector = ({selectedModel, setSelectedModel}) => {
         value={selectedModel}
         onChange={handleModelChange}
         displayEmpty
-        sx={{height: 30}}
-
+        sx={{height: 40}}
       >
         {models.length > 0 ? models.map((model) => (
           <MenuItem key={model} value={model}>{model}</MenuItem>

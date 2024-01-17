@@ -51,10 +51,11 @@ const ChatOutput = ({outputText, outputContainerRef}) => {
     const container = outputContainerRef.current;
     if (container) {
       requestAnimationFrame(() => {
-        container.scrollTop = container.scrollHeight;
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
       });
     }
-
   }, [outputText, renderOutputText, outputContainerRef]);
 
   return (

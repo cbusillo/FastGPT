@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import React, {useCallback, useState} from "react";
 import {TEST_PROMPT} from "../config";
 
-const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef, connectWebsocket, selectedModel}) => {
+const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef, connectWebsocket, selectedModel, testInput}) => {
   const [prompt, setPrompt] = useState('');
 
   const handleKeydown = (event) => {
@@ -35,7 +35,7 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
       === WebSocket.CLOSED) {
       connectWebsocket();
     }
-    let currentRequest = {"model": selectedModel.models, "prompt": currentPrompt};
+    let currentRequest = {"model": selectedModel, "prompt": currentPrompt, "test_input": testInput};
     if (websocketRef.current.readyState === WebSocket.CONNECTING) {
       websocketRef.current.addEventListener('open', () => {
         sendWSAndUpdateOutput(currentRequest);
@@ -43,7 +43,7 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
     } else if (websocketRef.current.readyState === WebSocket.OPEN) {
       sendWSAndUpdateOutput(currentRequest);
     }
-  }, [websocketRef, selectedModel, connectWebsocket, sendWSAndUpdateOutput]);
+  }, [websocketRef, selectedModel, testInput, connectWebsocket, sendWSAndUpdateOutput]);
 
 
   const sendTestPrompt = useCallback(() => {

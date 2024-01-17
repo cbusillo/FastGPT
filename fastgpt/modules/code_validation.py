@@ -1,5 +1,6 @@
 # code_validation.py
 import re
+import sys
 import tempfile
 import ast
 from typing import Tuple
@@ -7,6 +8,8 @@ from typing import Tuple
 from pylint.lint import Run
 from black import format_str, FileMode
 from pathlib import Path
+
+from stdlib_list import stdlib_list
 
 RECOGNIZED_LANGUAGES = ["python", "py", "bash", "sh", "shell"]
 
@@ -26,6 +29,11 @@ class CodeValidator:
     @staticmethod
     def extract_python_imports(code: str) -> set[str]:
         try:
+            standard_libs = set(
+                stdlib_list(
+                    version=f"{sys.version_info.major}.{sys.version_info.minor}"
+                )
+            )
             tree = ast.parse(code)
             imports = {
                 node.names[0].name
@@ -40,7 +48,8 @@ class CodeValidator:
                     for name in node.names
                 }
             )
-            return imports
+            non_standard_libs = imports - standard_libs
+            return non_standard_libs
         except SyntaxError:
             # Handle invalid Python code
             return set()
@@ -55,10 +64,6 @@ class CodeValidator:
 
     @staticmethod
     def format_with_black(code: str) -> str:
-        lines = code.splitlines()
-        if lines and "python" in lines[0]:
-            lines[0] = lines[0].replace("python", "")
-        code = "\n".join(lines)
         return format_str(code, mode=FileMode())
 
     @staticmethod
