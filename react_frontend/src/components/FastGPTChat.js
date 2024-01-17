@@ -39,14 +39,19 @@ const FastGPTChat = () => {
     };
 
     websocketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      try {
+        const data = JSON.parse(event.data);
 
-      if (data.code) {
-        setOutputCodeText(prev => (prev ? prev + "\n\n" : "") + data.code);
-      } else if (data.response) {
-        setOutputText(prev => prev + data.response);
+        if (data.code) {
+          setOutputCodeText(prev => (prev ? prev + "\n\n" : "") + data.code);
+        } else if (data.response) {
+          setOutputText(prev => prev + data.response);
+        }
+      } catch (error) {
+        setOutputText(prev => prev + event.data);
       }
     };
+
 
     websocketRef.current.onclose = (event) => {
       console.log('Connection closed', event);

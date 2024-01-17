@@ -1,26 +1,40 @@
 import os
 
+MINIMUM_COMPLETION_TOKENS = 100
 
 _DOCKER_HOST = "docker.local"
 _DOCKER_PORT = 2375
-_REDIS_HOST = _DOCKER_HOST
-_REDIS_PORT = 6379
 
 DOCKER_URL = f"tcp://{_DOCKER_HOST}:{_DOCKER_PORT}"
-REDIS_URL = f"redis://{_REDIS_HOST}:{_REDIS_PORT}/0"
+
 # noinspection SpellCheckingInspection
 LLM_APIS = {
     "phind-codellama-34": {
         "url": "http://localhost:8080/v1",
         "key": "sk-2f2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
+        "max_context_tokens": 4 * 1024,
     },
     "gpt-4": {
         "url": "https://api.openai.com/v1",
         "key": os.environ["OPENAI_API_KEY"],
+        "max_context_tokens": 8 * 1024,
     },
     "gpt-4-1106-preview": {
         "url": "https://api.openai.com/v1",
         "key": os.environ["OPENAI_API_KEY"],
+        "max_context_tokens": 120_000,
+        "max_output_tokens": 4 * 1024,
+    },
+    "gpt-3.5-turbo-16k": {
+        "url": "https://api.openai.com/v1",
+        "key": os.environ["OPENAI_API_KEY"],
+        "max_context_tokens": 16 * 1024,
+    },
+    "gpt-3.5-turbo-1106": {
+        "url": "https://api.openai.com/v1",
+        "key": os.environ["OPENAI_API_KEY"],
+        "max_context_tokens": 16 * 1024,
+        "max_output_tokens": 4 * 1024,
     },
 }
 
@@ -30,15 +44,17 @@ SYSTEM_MESSAGE = {
         "content": """
 You are an extremely good programmer. Provide all code in code blocks with no comments.  
 All code in the same file should be in the same codeblock. Put the langauge you 
-are using in the first line of the code block. Do not explain anything.  
+are using in the first line of the code block. 
 If the module name does not match a pypi package please use bash and pip to install it. 
 To run commands in the shell, use bash at the top of the codeblock.  Put the bash codeblock first.  
 This is executing in a docker container.  Do not user interactive commands like input. 
-Docker is very limited in commands, but you can use apt to install packages.""",
+Docker is very limited in commands, but you can use apt to install packages.  
+We are targeting pythin 3.11, FastAPI 0.109.0, and React.js 18.2.0.  Provide the best code you can.
+Focus on being clean and pythonic.
+""",
     }
 }
 
-MAX_TOKENS = 4096  # oops 1024 * 1024 * 128
 
 # noinspection LongLine,HttpUrlsUsage,SpellCheckingInspection
 TEST_INPUT = """

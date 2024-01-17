@@ -1,4 +1,5 @@
 # llm_communication.py
+import logging
 import subprocess
 from glob import glob
 from pathlib import Path
@@ -6,20 +7,19 @@ from typing import Generator
 from urllib.parse import urlparse
 
 import requests
-from openai import AsyncOpenAI
+import openai
 from transformers import GPT2Tokenizer
 
-from config import LLM_APIS, MAX_TOKENS, SYSTEM_MESSAGE
-from .logging_config import setup_logging
+from config import LLM_APIS, SYSTEM_MESSAGE, MINIMUM_COMPLETION_TOKENS
 
-logger = setup_logging(__name__)
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
     def __init__(self) -> None:
         self.models = {}
         for llm_model_name, llm_api in LLM_APIS.items():
-            self.models[llm_model_name] = AsyncOpenAI(
+            self.models[llm_model_name] = openai.AsyncOpenAI(
                 base_url=llm_api["url"],
                 api_key=llm_api["key"],
             )
@@ -28,20 +28,34 @@ class LLMClient:
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
     async def send_prompt(
-        self, prompt_text: str, model_name: str, max_tokens: int = MAX_TOKENS
+        self, prompt_text: str, model_name: str
     ) -> Generator[str, None, None]:
-        try:
-            system_message = self._get_system_message()
-            user_message = {"role": "user", "content": prompt_text}
-            api_message = [system_message, user_message]
-
+        system_message = self._get_system_message()
+        user_message = {"role": "user", "content": prompt_text}
+        api_message = [system_message, user_message]
+        max_context_tokens = LLM_APIS[model_name]["max_context_tokens"]
+        max_output_tokens = LLM_APIS[model_name].get("max_output_tokens", None)
+        if max_output_tokens:
+            adjusted_max_tokens = max_output_tokens
+        else:
             num_tokens_used = sum(
-                len(self.tokenizer.encode(message["content"], add_special_tokens=True))
+                len(
+                    self.tokenizer.encode(
+                        message["content"],
+                        add_special_tokens=True,
+                        max_length=max_context_tokens,
+                    )
+                )
                 for message in [system_message, user_message]
             )
+            adjusted_max_tokens = max_context_tokens - num_tokens_used
 
-            adjusted_max_tokens = max_tokens - num_tokens_used
-
+        if adjusted_max_tokens <= MINIMUM_COMPLETION_TOKENS:
+            message = f"Adjusted max tokens ({adjusted_max_tokens}) is too low for model {model_name}"
+            logger.warning(message)
+            yield message
+            return
+        try:
             response = await self.models[model_name].chat.completions.create(
                 model=model_name,
                 messages=api_message,
@@ -50,8 +64,21 @@ class LLMClient:
             )
             async for chunk in response:
                 yield chunk.choices[0].delta.content
-        except Exception as e:
-            print(f"Error in sending prompt: {e}")
+
+        except openai.Timeout as e:
+            logger.warning(f"OpenAI API request timed out: {e}")
+        except openai.APIConnectionError as e:
+            logger.warning(f"OpenAI API request failed to connect: {e}")
+        except openai.BadRequestError as e:
+            logger.warning(f"OpenAI API request was invalid: {e}")
+        except openai.APIError as e:
+            logger.warning(f"OpenAI API returned an API Error: {e}")
+        except openai.AuthenticationError as e:
+            logger.warning(f"OpenAI API request was not authorized: {e}")
+        except openai.PermissionDeniedError as e:
+            logger.warning(f"OpenAI API request was not permitted: {e}")
+        except openai.RateLimitError as e:
+            logger.warning(f"OpenAI API request exceeded rate limit: {e}")
 
     @staticmethod
     def _get_system_message(language: str = "python") -> dict[str, str]:

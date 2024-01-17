@@ -1,5 +1,6 @@
 # docker_interaction.py
 import base64
+import logging
 from datetime import datetime
 from time import sleep
 
@@ -7,9 +8,8 @@ import docker
 from docker.models.containers import Container
 
 from config import DOCKER_URL
-from .logging_config import setup_logging
 
-logger = setup_logging(__name__)
+logger = logging.getLogger(__name__)
 
 
 class DockerManager:
