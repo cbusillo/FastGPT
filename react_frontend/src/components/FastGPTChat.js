@@ -4,9 +4,10 @@ import Box from '@mui/material/Box';
 
 import ChatPrompt from './ChatPrompt';
 import ChatOutput from './ChatOutput';
+import {API_CONFIG} from "../config";
 
 
-const FastGPTChat = () => {
+const FastGPTChat = (selectedModel) => {
   const [outputText, setOutputText] = useState('');
   const [outputCodeText, setOutputCodeText] = useState('');
   const outputContainerRef = useRef(null);
@@ -25,7 +26,7 @@ const FastGPTChat = () => {
       }
     }
     console.log('Attempting to connect to WebSocket');
-    websocketRef.current = new WebSocket('ws://localhost:8000/generate');
+    websocketRef.current = new WebSocket(`ws://${API_CONFIG.BASEURL}/generate`);
 
     websocketRef.current.onopen = () => {
       console.log('Connected to websocket');
@@ -75,7 +76,9 @@ const FastGPTChat = () => {
       <ChatPrompt outputText={outputText} setOutputText={setOutputText}
                   setOutputCodeText={setOutputCodeText}
                   websocketRef={websocketRef}
-                  connectWebsocket={connectWebsocket}/>
+                  connectWebsocket={connectWebsocket}
+                  selectedModel={selectedModel}
+      />
     </Box>
   );
 }

@@ -1,7 +1,10 @@
 # app.py
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
+import threading
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from asyncio import sleep
 
+from websockets import ConnectionClosedOK
 
 # noinspection PyUnresolvedReferences
 from config import test_input
@@ -22,28 +25,32 @@ SLEEP_DURATION = 0.00001
 
 
 @app.websocket("/generate")
-async def websocket_generate(
-    websocket: WebSocket, background_tasks: BackgroundTasks
-) -> None:
+async def websocket_generate(websocket: WebSocket) -> None:
     await websocket.accept()
-    background_tasks.add_task(docker_manager.start_container)
+    threading.Thread(target=docker_manager.start_container).start()
+    await sleep(10)
     try:
         await process_websocket(websocket)
     except WebSocketDisconnect:
         logger.info("Client disconnected")
+    except ConnectionClosedOK:
+        logger.info("Connection closed")
     finally:
-        background_tasks.add_task(docker_manager.remove_container)
+        threading.Thread(target=docker_manager.remove_container).start()
 
 
 async def process_websocket(websocket: WebSocket) -> None:
     while True:
         data = await websocket.receive_json()
         prompt_text = data.get("prompt", "")
-        await process_prompt(websocket, prompt_text)
+        model_name = data.get("model", "")
+        await process_prompt(websocket, prompt_text, model_name=model_name)
 
 
-async def process_prompt(websocket: WebSocket, prompt_text: str) -> None:
-    response_generator = llm_client.send_prompt(prompt_text)
+async def process_prompt(
+    websocket: WebSocket, prompt_text: str, model_name: str
+) -> None:
+    response_generator = llm_client.send_prompt(prompt_text, model_name)
     full_response = ""
     async for chunk in response_generator:
         if not chunk:
@@ -51,7 +58,7 @@ async def process_prompt(websocket: WebSocket, prompt_text: str) -> None:
         full_response += chunk
         await websocket.send_json({"response": chunk})
         await sleep(SLEEP_DURATION)
-    # full_response = test_input
+    # full_response = Config.test_input
     await process_code_blocks(websocket, full_response)
 
 
@@ -92,4 +99,5 @@ async def execute_and_send_code(websocket: WebSocket, code: str) -> None:
 
 @app.get("/models")
 async def get_models() -> dict[str, list[str]]:
+    logger.info("Sending models")
     return {"models": llm_client.get_model_names()}

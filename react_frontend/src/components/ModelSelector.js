@@ -1,18 +1,26 @@
 import React, {useState, useEffect} from 'react';
 import {Select, MenuItem, FormControl, InputLabel} from '@mui/material';
+import {API_CONFIG} from "../config";
 
-const ModelSelector = () => {
+const ModelSelector = ({selectedModel, setSelectedModel}) => {
   const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('');
+
 
   useEffect(() => {
-    fetch('http://localhost:8000/models')
+    fetch(`${API_CONFIG.PROTOCOL}://${API_CONFIG.BASEURL}/models`)
       .then(response => response.json())
-      .then(data => setModels(data.models))
+      .then(data => {
+        if (data.hasOwnProperty('models')) {
+          setModels(data.models);
+          if (data.models.length > 0) {
+            setSelectedModel(data.models[0]);
+          }
+        }
+      })
       .catch(error => {
         console.error('Error fetching models:', error);
       });
-  }, []);
+  }, [setSelectedModel]);
 
   const handleModelChange = (event) => {
     setSelectedModel(event.target.value);
@@ -26,13 +34,15 @@ const ModelSelector = () => {
         value={selectedModel}
         onChange={handleModelChange}
         displayEmpty
+        sx={{height: 30}}
+
       >
-        <MenuItem value="">
-          <em></em>
-        </MenuItem>
-        {models.map((model) => (
+        {models.length > 0 ? models.map((model) => (
           <MenuItem key={model} value={model}>{model}</MenuItem>
-        ))}
+        )) : (
+          <MenuItem value={''}>No models available</MenuItem>
+        )
+        }
       </Select>
     </FormControl>
   )

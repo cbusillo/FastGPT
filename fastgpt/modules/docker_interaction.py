@@ -2,7 +2,7 @@
 import docker
 from docker.models.containers import Container
 
-from config import DOCKER_HOST
+from config import DOCKER_URL
 from .logging_config import setup_logging
 
 logger = setup_logging(__name__)
@@ -10,11 +10,12 @@ logger = setup_logging(__name__)
 
 class DockerManager:
     def __init__(self, image: str = "python:3.11") -> None:
-        self.client = docker.DockerClient(base_url=DOCKER_HOST)
+        self.client = docker.DockerClient(base_url=DOCKER_URL)
         self.image = image
         self.container: Container | None = None
 
     def start_container(self) -> None:
+        logger.info("Starting docker container.")
         self.container = self.client.containers.run(
             image=self.image, detach=True, tty=True, stdin_open=True
         )
@@ -46,8 +47,8 @@ class DockerManager:
             )
             output = output.decode("utf-8")  # Decoding from bytes to string
             if exit_code != 0:
-                logger.error(f"Failed to install package {package}.")
+                message = "Failed to install package"
             else:
-                logger.info(f"Successfully installed package {package}.")
-            outputs.append(output)
+                message = "Successfully installed package"
+            outputs.append(f"{message} {package}.\n{output}")
         return "\n".join(outputs)

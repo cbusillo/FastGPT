@@ -3,8 +3,9 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import React, {useCallback, useState} from "react";
+import {TEST_PROMPT} from "../config";
 
-const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef, connectWebsocket}) => {
+const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef, connectWebsocket, selectedModel}) => {
   const [prompt, setPrompt] = useState('');
 
   const handleKeydown = (event) => {
@@ -20,11 +21,11 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
     setOutputCodeText('');
   };
 
-  const send = useCallback((currentPrompt) => {
+  const sendWSAndUpdateOutput = useCallback((data) => {
     let userPrompt = outputText ? "\n\n" : "";
-    userPrompt += `User: \n${currentPrompt}\n\nFastGPT: \n`;
+    userPrompt += `User: \n${data.prompt}\n\nFastGPT: \n`;
     setOutputText(prev => prev + userPrompt);
-    websocketRef.current.send(JSON.stringify({prompt: currentPrompt}));
+    websocketRef.current.send(JSON.stringify(data));
     setPrompt('');
   }, [websocketRef, setOutputText, outputText]);
 
@@ -34,19 +35,20 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
       === WebSocket.CLOSED) {
       connectWebsocket();
     }
+    let currentRequest = {"model": selectedModel.models, "prompt": currentPrompt};
     if (websocketRef.current.readyState === WebSocket.CONNECTING) {
       websocketRef.current.addEventListener('open', () => {
-        send(currentPrompt);
+        sendWSAndUpdateOutput(currentRequest);
       }, {once: true});
     } else if (websocketRef.current.readyState === WebSocket.OPEN) {
-      send(currentPrompt);
+      sendWSAndUpdateOutput(currentRequest);
     }
-  }, [websocketRef, connectWebsocket, send]);
+  }, [websocketRef, selectedModel, connectWebsocket, sendWSAndUpdateOutput]);
 
 
   const sendTestPrompt = useCallback(() => {
     // noinspection LongLine
-    sendPrompt("Write a Python script that generates a list of random integers between 1 and 100. The script should then calculate and print the mean, median, and standard deviation of these numbers. Use the 'random' module to generate the list and 'statistics' module for the calculations. Ensure to include necessary imports and handle any potential errors.");
+    sendPrompt(TEST_PROMPT);
   }, [sendPrompt]);
 
   return (

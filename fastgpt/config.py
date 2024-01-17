@@ -1,16 +1,25 @@
 import os
 
-DOCKER_HOST = "tcp://docker.local:2375"
+
+_DOCKER_HOST = "docker.local"
+_DOCKER_PORT = 2375
+_REDIS_HOST = _DOCKER_HOST
+_REDIS_PORT = 6379
+
+DOCKER_URL = f"tcp://{_DOCKER_HOST}:{_DOCKER_PORT}"
+REDIS_URL = f"redis://{_REDIS_HOST}:{_REDIS_PORT}/0"
 # noinspection SpellCheckingInspection
 LLM_APIS = {
-    "llama.cpp": {
+    "phind-codellama-34": {
         "url": "http://localhost:8080/v1",
-        "model": "phind-codellama-34",
         "key": "sk-2f2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b",
     },
-    "openai": {
+    "gpt-4": {
         "url": "https://api.openai.com/v1",
-        "model": "gpt-4",
+        "key": os.environ["OPENAI_API_KEY"],
+    },
+    "gpt-4-1106-preview": {
+        "url": "https://api.openai.com/v1",
         "key": os.environ["OPENAI_API_KEY"],
     },
 }
@@ -27,11 +36,6 @@ SYSTEM_MESSAGE = {
 }
 
 MAX_TOKENS = 4096  # oops 1024 * 1024 * 128
-
-# noinspection LongLine
-test_prompt = """
-Write a Python script that generates a list of random integers between 1 and 100. The script should then calculate and print the mean, median, and standard deviation of these numbers. Use the 'random' module to generate the list and 'statistics' module for the calculations. Ensure to include necessary imports and handle any potential errors.
-"""
 
 # noinspection LongLine,HttpUrlsUsage
 test_input = """
