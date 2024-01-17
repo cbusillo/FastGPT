@@ -1,4 +1,6 @@
 # docker_interaction.py
+import base64
+from datetime import datetime
 from time import sleep
 
 import docker
@@ -21,47 +23,61 @@ class DockerManager:
         self.container = self.client.containers.run(
             image=self.image, detach=True, tty=True, stdin_open=True
         )
-        self.create_app_directory()
+        self._create_app_directory()
 
     def remove_container(self) -> None:
-        self.wait_for_container()
+        self._wait_for_container()
 
         self.container.stop()
         self.container.remove(force=True)
         self.container = None
 
-    def create_app_directory(self) -> None:
+    def _create_app_directory(self) -> None:
         self.container.exec_run(cmd="mkdir -p /app")
 
-    def execute_python(self, code: str) -> str:
-        self.wait_for_container()
+    def execute_bash(self, command: str) -> tuple[int, str]:
+        self._wait_for_container()
+
+        encoded_command = base64.b64encode(command.encode()).decode()
+        command_str = f"echo {encoded_command} | base64 --decode | /bin/bash"
+
         exit_code, output = self.container.exec_run(
-            cmd=["python", "-c", code], workdir="/app"
+            cmd=["/bin/bash", "-c", command_str], workdir="/app"
         )
-        return output.decode("utf-8")
+        return exit_code, output.decode("utf-8")
 
-    def execute_bash(self, commands: list[str] | str) -> str | None:
-        if isinstance(commands, str):
-            commands = [commands]
-        self.wait_for_container()
-        exit_code, output = self.container.exec_run(cmd=commands, workdir="/app")
-        return output.decode("utf-8") if exit_code == 0 else None
+    def save_python_script(self, code: str) -> str:
+        filename = f"script_{datetime.now().strftime('%Y%m%d%H%M%S')}.py"
+        filepath = f"/app/{filename}"
 
-    def execute_pip_install(self, packages: [str]) -> str:
-        self.wait_for_container()
+        command = f"cat <<EOF > {filepath}\n{code}\nEOF"
+        self.execute_bash(command)
+
+        return filepath
+
+    def execute_python_string(self, code: str) -> str:
+        python_script_path = self.save_python_script(code)
+        return self.execute_python_script(python_script_path)
+
+    def execute_python_script(self, file_path: str) -> str:
+        exit_code, output = self.execute_bash(f"python {file_path}")
+        if exit_code != 0:
+            return f"Error executing Python script: {output}"
+        return output
+
+    def execute_pip_install(self, packages: set[str]) -> str:
         outputs = []
         for package in packages:
-            exit_code, output = self.container.exec_run(
-                cmd=["pip", "install", package, "-v"], workdir="/app"
-            )
+            install_command = f"pip install {package} -v"
+            exit_code, output = self.execute_bash(install_command)
             if exit_code != 0:
                 message = "Failed to install package"
             else:
                 message = "Successfully installed package"
-            outputs.append(f"{message} {package}")
-        return "\n\n".join(outputs)
+            outputs.append(f"{message} {package}.")
+        return "\n".join(outputs)
 
-    def wait_for_container(self) -> None:
+    def _wait_for_container(self) -> None:
         retries = 20
         while retries > 0:
             if self.container:

@@ -1,3 +1,4 @@
+# llm_communication.py
 import subprocess
 from glob import glob
 from pathlib import Path
@@ -32,6 +33,7 @@ class LLMClient:
         try:
             system_message = self._get_system_message()
             user_message = {"role": "user", "content": prompt_text}
+            api_message = [system_message, user_message]
 
             num_tokens_used = sum(
                 len(self.tokenizer.encode(message["content"], add_special_tokens=True))
@@ -42,7 +44,7 @@ class LLMClient:
 
             response = await self.models[model_name].chat.completions.create(
                 model=model_name,
-                messages=[system_message, user_message],
+                messages=api_message,
                 max_tokens=adjusted_max_tokens,
                 stream=True,
             )

@@ -17,7 +17,7 @@ const ChatOutput = ({outputText, outputContainerRef}) => {
       const plainText = text.substring(lastIndex, result.index);
       const code = result[1];
       elements.push(<div key={`text-${lastIndex}`}>{convertLineBreaks(plainText)}</div>);
-      elements.push(<CodeBlock key={`code-${lastIndex}`} code={code} language="python"/>);
+      elements.push(<CodeBlock key={`code-${lastIndex}`} code={code}/>);
       lastIndex = codeRegex.lastIndex;
     }
 
@@ -27,7 +27,7 @@ const ChatOutput = ({outputText, outputContainerRef}) => {
       const beforeCode = remainingText.substring(0, openCodeMatch.index);
       const ongoingCode = openCodeMatch[1];
       elements.push(<div key={`text-${lastIndex}`}>{convertLineBreaks(beforeCode)}</div>);
-      elements.push(<CodeBlock key={`code-${lastIndex}-ongoing`} code={ongoingCode} language="python" ongoing/>);
+      elements.push(<CodeBlock key={`code-${lastIndex}-ongoing`} code={ongoingCode} ongoing/>);
     } else {
       elements.push(<div key={`text-${lastIndex}`}>{convertLineBreaks(remainingText)}</div>);
     }

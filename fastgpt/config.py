@@ -27,11 +27,14 @@ LLM_APIS = {
 SYSTEM_MESSAGE = {
     "python": {
         "role": "system",
-        "content": "You are a smart and friendly AGI. You are especially an extremely good programmer.  \
-        Please follow the instructions and provide all code asked for in a code block.  Do not test, \
-        analyze, or run the code. Please put the langauge you are using in the first line of the code block. \
-        Any code in codeblocks will execute in a docker environment.  Any imports will install matching deps. \
-        from pypi automatically in docker.",
+        "content": """
+You are an extremely good programmer. Provide all code in code blocks with no comments.  
+All code in the same file should be in the same codeblock. Put the langauge you 
+are using in the first line of the code block. Do not explain anything.  
+If the module name does not match a pypi package please use bash and pip to install it. 
+To run commands in the shell, use bash at the top of the codeblock.  Put the bash codeblock first.  
+This is executing in a docker container.  Do not user interactive commands like input. 
+Docker is very limited in commands, but you can use apt to install packages.""",
     }
 }
 
@@ -39,31 +42,29 @@ MAX_TOKENS = 4096  # oops 1024 * 1024 * 128
 
 # noinspection LongLine,HttpUrlsUsage,SpellCheckingInspection
 TEST_INPUT = """
-```python
-import random
-import statistics
-import requests
-
-try:
-    # Generate a list of 100 random integers between 1 and 100000
-    numbers = [random.randint(1, 100000) for _ in range(100)]
-    
-    print("Generated numbers:")
-    print(numbers)
-
-    # Calculate mean of the numbers
-    mean_num = statistics.mean(numbers)
-    print("Mean:", mean_num)
-
-    # Calculate median of the numbers
-    median_num = statistics.median(numbers)
-    print("Median:", median_num)
-
-    # Calculate standard deviation of the numbers
-    std_dev_num = statistics.stdev(numbers)
-    print("Standard Deviation:", std_dev_num)
-
-except Exception as e:
-    print("An error occurred:", str(e))
+```bash
+pip install ping3
 ```
+
+Then, you can create a Python script with the following code:
+
+```python
+from ping3 import ping
+
+def ping_host(host):
+    try:
+        response_time = ping(host)
+        if response_time is None:
+            print(f"{host} is not reachable.")
+        else:
+            print(f"{host} is reachable in {response_time}s.")
+    except exceptions.PingError as e:
+        print(f"An error occurred while pinging {host}: {e}")
+
+if __name__ == "__main__":
+    host = input("Enter a host to ping: ")
+    ping_host(host)
+```
+
+This script will prompt the user for a host to ping and then print out whether the host is reachable and how long it took to respond. If an error occurs, it will print that as well.
 """

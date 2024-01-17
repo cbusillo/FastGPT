@@ -18,7 +18,7 @@ const FastGPTChat = () => {
   const outputCodeContainerRef = useRef(null);
   const websocketRef = useRef(null);
   const [selectedModel, setSelectedModel] = useState('');
-  const [testInput, setTestInput] = useState(true);
+  const [testInput, setTestInput] = useState(false);
 
   const connectWebsocket = useCallback(() => {
     if (websocketRef.current) {

@@ -66,6 +66,7 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={handleKeydown}
         variant="outlined"
+        maxRows={10}
         sx={{
           flex: 1,
           mr: 1

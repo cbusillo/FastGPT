@@ -35,19 +35,13 @@ class CodeValidator:
                 )
             )
             tree = ast.parse(code)
-            imports = {
-                node.names[0].name
-                for node in ast.walk(tree)
-                if isinstance(node, ast.Import)
-            }
-            imports.update(
-                {
-                    name.name
-                    for node in ast.walk(tree)
-                    if isinstance(node, ast.ImportFrom)
-                    for name in node.names
-                }
-            )
+            imports = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imports.update([name.name for name in node.names])
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:  # Check if the module is not None
+                        imports.add(node.module)
             non_standard_libs = imports - standard_libs
             return non_standard_libs
         except SyntaxError:
