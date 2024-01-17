@@ -10,7 +10,7 @@ import requests
 import openai
 from transformers import GPT2Tokenizer
 
-from config import LLM_APIS, SYSTEM_MESSAGE, MINIMUM_COMPLETION_TOKENS
+from modules.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class LLMClient:
     def __init__(self) -> None:
         self.models = {}
-        for llm_model_name, llm_api in LLM_APIS.items():
+        for llm_model_name, llm_api in config["LLM_APIS"].items():
             self.models[llm_model_name] = openai.AsyncOpenAI(
                 base_url=llm_api["url"],
                 api_key=llm_api["key"],
@@ -30,11 +30,12 @@ class LLMClient:
     async def send_prompt(
         self, prompt_text: str, model_name: str
     ) -> Generator[str, None, None]:
+        llm_api = config["LLM_APIS"][model_name]
         system_message = self._get_system_message()
         user_message = {"role": "user", "content": prompt_text}
         api_message = [system_message, user_message]
-        max_context_tokens = LLM_APIS[model_name]["max_context_tokens"]
-        max_output_tokens = LLM_APIS[model_name].get("max_output_tokens", None)
+        max_context_tokens = llm_api["max_context_tokens"]
+        max_output_tokens = llm_api.get("max_output_tokens", None)
         if max_output_tokens:
             adjusted_max_tokens = max_output_tokens
         else:
@@ -44,13 +45,14 @@ class LLMClient:
                         message["content"],
                         add_special_tokens=True,
                         max_length=max_context_tokens,
+                        truncation=True,
                     )
                 )
                 for message in [system_message, user_message]
             )
             adjusted_max_tokens = max_context_tokens - num_tokens_used
 
-        if adjusted_max_tokens <= MINIMUM_COMPLETION_TOKENS:
+        if adjusted_max_tokens <= config.get("MINIMUM_COMPLETION_TOKENS", 0):
             message = f"Adjusted max tokens ({adjusted_max_tokens}) is too low for model {model_name}"
             logger.warning(message)
             yield message
@@ -82,18 +84,19 @@ class LLMClient:
 
     @staticmethod
     def _get_system_message(language: str = "python") -> dict[str, str]:
-        return SYSTEM_MESSAGE[language]
+        return config["SYSTEM_MESSAGE"][language]
 
     @staticmethod
     def check_and_start_local_server(model_name: str) -> None:
-        model_url = LLM_APIS[model_name]["url"]
+        model_url = config["LLM_APIS"][model_name]["url"]
         model_port = urlparse(model_url).port
+        model_port_str = str(model_port)
 
         try:
             requests.get(f"{model_url}/health")
         except requests.exceptions.ConnectionError:
             script_path = Path(__file__).parent
-            project_root = script_path.parent.absolute()
+            project_root = script_path.parent.parent.absolute()
             server_binary = project_root / "external" / "llama.cpp" / "server"
             model_pattern = str(
                 project_root / "models" / (model_name + "*" + "Q4" + "*.gguf")
@@ -102,13 +105,12 @@ class LLMClient:
             if len(model_pattern) == 0:
                 raise FileNotFoundError(f"Model file not found for {model_name}")
             model_file = glob(model_pattern)[0]
-            command = [server_binary, "--port", model_port, "-m", model_file]
-            logger.error(
-                f"Starting local server using '{' '.join(str(text) for text in command)}'"
-            )
+            command = [server_binary, "--port", model_port_str, "-m", model_file]
+            command_str = " ".join(str(text) for text in command)
+            logger.info(f"Starting local server using '{command_str}'")
             subprocess.Popen(command)
 
     @staticmethod
     def get_model_names() -> list[str]:
-        for model_name in LLM_APIS.keys():
+        for model_name in config["LLM_APIS"].keys():
             yield model_name

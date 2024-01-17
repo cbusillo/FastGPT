@@ -5,19 +5,21 @@ import tempfile
 import ast
 from typing import Tuple
 
+
 from pylint.lint import Run
 from black import format_str, FileMode
 from pathlib import Path
 
 from stdlib_list import stdlib_list
 
-RECOGNIZED_LANGUAGES = ["python", "py", "bash", "sh", "shell"]
+from modules.config import config
 
 
 class CodeValidator:
     @staticmethod
     def extract_code_blocks(text: str) -> list[Tuple[str | None, str]] | None:
-        pattern = rf"```({'|'.join(RECOGNIZED_LANGUAGES)})?\n?([\s\S]*?)```"
+        recognized_languages = config["RECOGNIZED_LANGUAGES"]
+        pattern = rf"```({'|'.join(recognized_languages)})?\n?([\s\S]*?)```"
         code_blocks = re.findall(pattern, text)
         if not code_blocks:
             return None

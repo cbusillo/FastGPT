@@ -39,7 +39,7 @@ const ModelSelector = ({selectedModel, setSelectedModel}) => {
         {models.length > 0 ? models.map((model) => (
           <MenuItem key={model} value={model}>{model}</MenuItem>
         )) : (
-          <MenuItem value={''}>No models available</MenuItem>
+          [<MenuItem key="no-models" value={''}>No models available</MenuItem>]
         )
         }
       </Select>
