@@ -1,46 +1,44 @@
+# routes/conversations.py
 from fastapi import APIRouter, HTTPException
-from components.conversations import Conversation
+from sqlalchemy import select, delete
+from database.sqlite import database, engine, metadata
+from database.models.conversations import conversations, messages
 
 router = APIRouter()
 
-conversations = (
-    {}
-)  # This is a placeholder. You might want to replace this with a proper database or data store.
+# Create the database
+metadata.create_all(engine)
 
 
 @router.post("/conversations")
 async def start_conversation(model_name: str) -> dict[str, str]:
-    conversation = Conversation(model_name)
-    conversation_id = str(
-        id(conversation)
-    )  # This is a placeholder. You might want to replace this with a proper ID generation method.
-    conversations[conversation_id] = conversation
-    return {"conversation_id": conversation_id}
+    query = conversations.insert().values(model_name=model_name)
+    last_record_id = await database.execute(query)
+    return {"conversation_id": str(last_record_id)}
 
 
 @router.get("/conversations/{conversation_id}")
 async def get_conversation(conversation_id: str) -> dict[str, list[dict[str, str]]]:
-    conversation = conversations.get(conversation_id)
-    if not conversation:
+    query = select([conversations]).where(conversations.c.id == conversation_id)
+    result = await database.fetch_one(query)
+    if not result:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return {"messages": conversation.get_messages()}
+    return {"messages": result}
 
 
 @router.post("/conversations/{conversation_id}/messages")
 async def add_message(
     conversation_id: str, message: str, sender: str
 ) -> dict[str, str]:
-    conversation = conversations.get(conversation_id)
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    conversation.add_message(message, sender)
+    query = messages.insert().values(
+        conversation_id=conversation_id, sender=sender, message=message
+    )
+    await database.execute(query)
     return {"status": "Message added"}
 
 
 @router.delete("/conversations/{conversation_id}")
 async def end_conversation(conversation_id: str) -> dict[str, str]:
-    conversation = conversations.get(conversation_id)
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    del conversations[conversation_id]
+    query = delete(conversations).where(conversations.c.id == conversation_id)
+    await database.execute(query)
     return {"status": "Conversation ended"}

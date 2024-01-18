@@ -11,7 +11,7 @@ import Switch from "@mui/material/Switch";
 import {FormControlLabel} from "@mui/material";
 
 
-const FastGPTChat = () => {
+const OldFastGPTChat = () => {
   const [outputText, setOutputText] = useState('');
   const [outputCodeText, setOutputCodeText] = useState('');
   const outputContainerRef = useRef(null);
@@ -76,7 +76,7 @@ const FastGPTChat = () => {
   return (
     <Box sx={{display: 'flex', flexDirection: 'column', height: '96vh'}}>
       <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 1}}>
-        <Typography variant="h6">Welcome to FastGPT 2.0</Typography>
+        <Typography variant="h6">Welcome to FastGPT</Typography>
         <FormControlLabel control={
           <Switch checked={testInput} onChange={handleTestInputChange} name="darkMode"/>
         }
@@ -105,4 +105,4 @@ const FastGPTChat = () => {
   );
 }
 
-export default FastGPTChat;
+export default OldFastGPTChat;

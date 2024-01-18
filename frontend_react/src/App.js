@@ -1,10 +1,12 @@
 import React, {useState} from 'react';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import {ThemeProvider, createTheme} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import FastGPTChat from './components/FastGPTChat';
 import {FormControlLabel} from "@mui/material";
-import Switch from "@mui/material/Switch";
+import Switch from "@mui/material/Switch";  // renamed to MuiSwitch
 import Box from "@mui/material/Box";
+import FastGPTChat from "./components/FastGPTChat";
+import OldFastGPTChat from './components/OldFastGPTChat';
 
 
 function App() {
@@ -34,8 +36,13 @@ function App() {
           label={"Dark"}
         />
       </Box>
-      {/* Main Content */}
-      <FastGPTChat/>
+      <Router>
+        <Routes>
+          <Route path="/" element={<FastGPTChat/>}/>
+          <Route path="/old" element={<OldFastGPTChat/>}/>
+          <Route path="/new" element={<FastGPTChat/>}/>
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 }
