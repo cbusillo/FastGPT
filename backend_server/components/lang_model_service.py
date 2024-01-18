@@ -10,7 +10,7 @@ import requests
 import openai
 from transformers import GPT2Tokenizer
 
-from modules.config import config
+from components.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -18,19 +18,19 @@ logger = logging.getLogger(__name__)
 class LLMClient:
     def __init__(self) -> None:
         self.models = {}
-        for llm_model_name, llm_api in config["LLM_APIS"].items():
+        for llm_model_name, llm_api in config.LLM_APIS.items():
             self.models[llm_model_name] = openai.AsyncOpenAI(
                 base_url=llm_api["url"],
                 api_key=llm_api["key"],
             )
-            if "8080" in llm_api["url"]:
+            if "local" in llm_api["url"]:
                 self.check_and_start_local_server(llm_model_name)
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
     async def send_prompt(
         self, prompt_text: str, model_name: str
     ) -> Generator[str, None, None]:
-        llm_api = config["LLM_APIS"][model_name]
+        llm_api = config.LLM_APIS[model_name]
         system_message = self._get_system_message()
         user_message = {"role": "user", "content": prompt_text}
         api_message = [system_message, user_message]
@@ -52,7 +52,7 @@ class LLMClient:
             )
             adjusted_max_tokens = max_context_tokens - num_tokens_used
 
-        if adjusted_max_tokens <= config.get("MINIMUM_COMPLETION_TOKENS", 0):
+        if adjusted_max_tokens <= config.MINIMUM_COMPLETION_TOKENS:
             message = f"Adjusted max tokens ({adjusted_max_tokens}) is too low for model {model_name}"
             logger.warning(message)
             yield message
@@ -67,28 +67,31 @@ class LLMClient:
             async for chunk in response:
                 yield chunk.choices[0].delta.content
 
-        except openai.Timeout as e:
-            logger.warning(f"OpenAI API request timed out: {e}")
-        except openai.APIConnectionError as e:
-            logger.warning(f"OpenAI API request failed to connect: {e}")
-        except openai.BadRequestError as e:
-            logger.warning(f"OpenAI API request was invalid: {e}")
-        except openai.APIError as e:
-            logger.warning(f"OpenAI API returned an API Error: {e}")
-        except openai.AuthenticationError as e:
-            logger.warning(f"OpenAI API request was not authorized: {e}")
-        except openai.PermissionDeniedError as e:
-            logger.warning(f"OpenAI API request was not permitted: {e}")
-        except openai.RateLimitError as e:
-            logger.warning(f"OpenAI API request exceeded rate limit: {e}")
+        except Exception as e:
+            if isinstance(e, openai.Timeout):
+                logger.warning(f"OpenAI API request timed out: {e}")
+            elif isinstance(e, openai.BadRequestError):
+                logger.warning(f"OpenAI API request failed to connect: {e}")
+            elif isinstance(e, openai.BadRequestError):
+                logger.warning(f"OpenAI API request was invalid: {e}")
+            elif isinstance(e, openai.APIError):
+                logger.warning(f"OpenAI API returned an API Error: {e}")
+            elif isinstance(e, openai.AuthenticationError):
+                logger.warning(f"OpenAI API request was not authorized: {e}")
+            elif isinstance(e, openai.PermissionDeniedError):
+                logger.warning(f"OpenAI API request was not permitted: {e}")
+            elif isinstance(e, openai.RateLimitError):
+                logger.warning(f"OpenAI API request exceeded rate limit: {e}")
+            else:
+                raise
 
     @staticmethod
     def _get_system_message(language: str = "python") -> dict[str, str]:
-        return config["SYSTEM_MESSAGE"][language]
+        return config.SYSTEM_MESSAGES[language]
 
     @staticmethod
     def check_and_start_local_server(model_name: str) -> None:
-        model_url = config["LLM_APIS"][model_name]["url"]
+        model_url = config.LLM_APIS[model_name]["url"]
         model_port = urlparse(model_url).port
         model_port_str = str(model_port)
 
@@ -112,5 +115,5 @@ class LLMClient:
 
     @staticmethod
     def get_model_names() -> list[str]:
-        for model_name in config["LLM_APIS"].keys():
+        for model_name in config.LLM_APIS.keys():
             yield model_name

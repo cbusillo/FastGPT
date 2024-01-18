@@ -7,14 +7,14 @@ from time import sleep
 import docker
 from docker.models.containers import Container
 
-from modules.config import config
+from components.config import config
 
 logger = logging.getLogger(__name__)
 
 
 class DockerManager:
     def __init__(self, image: str = "python:3.11") -> None:
-        self.client = docker.DockerClient(base_url=config["DOCKER_URL"])
+        self.client = docker.DockerClient(base_url=config.DOCKER_URL)
         self.image = image
         self.container: Container | None = None
 

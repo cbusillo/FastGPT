@@ -3,16 +3,16 @@ from asyncio import sleep
 
 from fastapi import WebSocket
 
-from modules.code_validation import CodeValidator
-from modules.config import config
-from modules.docker_interaction import DockerManager
-from modules.llm_communication import LLMClient
-from modules.logger import setup_logger
+from components.code_validation import CodeValidator
+from components.config import config
+from components.docker_interface import DockerManager
+from components.lang_model_service import LLMClient
+from components.logger import setup_logger
 
 logger = setup_logger()
 
 
-class DataProcessor:
+class ChatDataProcessor:
     def __init__(
         self, docker_manager: DockerManager, websocket: WebSocket, llm_client: LLMClient
     ) -> None:
@@ -24,9 +24,9 @@ class DataProcessor:
         self, prompt_text: str, model_name: str, test_input: bool
     ) -> None:
         if test_input:
-            full_response = config.get("TEST_INPUT")
+            full_response = config.TEST_INPUT
             await self.websocket.send_json({"response": full_response})
-            await sleep(config["SLEEP_DURATION"])
+            await sleep(config.SLEEP_DURATION)
         else:
             response_generator = self.llm_client.send_prompt(prompt_text, model_name)
             full_response = ""
@@ -35,7 +35,7 @@ class DataProcessor:
                     continue
                 full_response += chunk
                 await self.websocket.send_json({"response": chunk})
-                await sleep(config["SLEEP_DURATION"])
+                await sleep(config.SLEEP_DURATION)
 
         await self.process_code_blocks(full_response)
 
@@ -51,13 +51,13 @@ class DataProcessor:
             _exit_code, bash_output = self.docker_manager.execute_bash(code_block)
             code_output = code_block + "\n\n" + bash_output + "=" * 50
             await self.websocket.send_json({"code": code_output})
-            await sleep(config["SLEEP_DURATION"])
+            await sleep(config.SLEEP_DURATION)
 
         if language in ["py", "python"] and CodeValidator.is_valid_python(code_block):
             formatted_code = CodeValidator.format_with_black(code_block)
             code_imports = CodeValidator.extract_python_imports(formatted_code)
             pip_output = self.docker_manager.execute_pip_install(code_imports)
-            await sleep(config["SLEEP_DURATION"])
+            await sleep(config.SLEEP_DURATION)
             await self.websocket.send_json({"code": pip_output})
             (
                 error_count,
@@ -74,4 +74,4 @@ class DataProcessor:
     async def execute_and_send_code(self, code: str) -> None:
         docker_output = self.docker_manager.execute_python_string(code)
         await self.websocket.send_json({"code": docker_output})
-        await sleep(config["SLEEP_DURATION"])
+        await sleep(config.SLEEP_DURATION)

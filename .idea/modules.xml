@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/FastGPT.iml" filepath="$PROJECT_DIR$/.idea/FastGPT.iml" />
-      <module fileurl="file://$PROJECT_DIR$/react_frontend/.idea/react_frontend.iml" filepath="$PROJECT_DIR$/react_frontend/.idea/react_frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frontend_react/.idea/react_frontend.iml" filepath="$PROJECT_DIR$/frontend_react/.idea/react_frontend.iml" />
     </modules>
   </component>
 </project>

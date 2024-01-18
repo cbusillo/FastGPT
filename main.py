@@ -1,6 +1,6 @@
 # main.py
 
-from fastgpt.app import app
+from backend_server.app import app
 import uvicorn
 
 if __name__ == "__main__":

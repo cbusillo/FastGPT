@@ -6,19 +6,19 @@ import ast
 from typing import Tuple
 
 
-from pylint.lint import Run
+from pylint.lint import PyLinter
 from black import format_str, FileMode
 from pathlib import Path
 
 from stdlib_list import stdlib_list
 
-from modules.config import config
+from components.config import config
 
 
 class CodeValidator:
     @staticmethod
     def extract_code_blocks(text: str) -> list[Tuple[str | None, str]] | None:
-        recognized_languages = config["RECOGNIZED_LANGUAGES"]
+        recognized_languages = config.RECOGNIZED_LANGUAGES
         pattern = rf"```({'|'.join(recognized_languages)})?\n?([\s\S]*?)```"
         code_blocks = re.findall(pattern, text)
         if not code_blocks:
@@ -70,10 +70,14 @@ class CodeValidator:
             temp_file.write(code)
             temp_file_path = Path(temp_file.name)
 
-        pylint_output = Run([str(temp_file_path)], exit=False)
+        linter = PyLinter()
+        linter.set_option("disable", config.PYLINT_DISABLED_CHECKS)
 
-        error_count = pylint_output.linter.stats.error
-        warning_count = pylint_output.linter.stats.warning
-        messages = [str(msg) for msg in pylint_output.linter.reporter.messages]
+        linter.check([str(temp_file_path)])
+
+        error_count = linter.stats.by_msg.get("E", 0)
+        warning_count = linter.stats.by_msg.get("W", 0)
+        messages = [str(msg) for msg in linter.reporter.messages]
+
         temp_file_path.unlink()
         return error_count, warning_count, messages
