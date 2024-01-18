@@ -2,11 +2,42 @@
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import React, {useCallback, useState} from "react";
+import React, {useState} from "react";
 import {TEST_PROMPT} from "../config";
+import axios from 'axios';
 
-const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef, connectWebsocket, selectedModel, testInput}) => {
+const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, selectedModel, testInput}) => {
   const [prompt, setPrompt] = useState('');
+  const [conversationId, setConversationId] = useState(null); // Add state for conversation ID
+
+  const startConversation = async () => {
+    const response = await axios.post('http://localhost:8000/conversations', {model_name: selectedModel});
+    setConversationId(response.data.conversation_id);
+  };
+
+  const getConversation = async () => {
+    const response = await axios.get(`/conversations/${conversationId}`);
+    setOutputText(response.data.messages.join('\n'));
+  };
+
+  const endConversation = async () => {
+    await axios.delete(`/conversations/${conversationId}`);
+    setConversationId(null);
+  };
+
+  const sendPrompt = async (currentPrompt) => {
+    console.log('Sending prompt', selectedModel);
+    if (!conversationId) {
+      await startConversation();
+    }
+    await axios.post(`http://localhost:8000/conversations/${conversationId}/messages`, {
+      model_name: selectedModel,
+      //message: currentPrompt,
+      //sender: 'User'
+    });
+    await getConversation();
+    setPrompt('');
+  };
 
   const handleKeydown = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -16,40 +47,14 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
   };
 
 
-  const clearConversation = () => {
+  const clearConversation = async () => {
+    if (conversationId) {
+      await endConversation();
+    }
     setOutputText('');
     setOutputCodeText('');
   };
 
-  const sendWSAndUpdateOutput = useCallback((data) => {
-    let userPrompt = outputText ? "\n\n" : "";
-    userPrompt += `User: \n${data.prompt}\n\nFastGPT: \n`;
-    setOutputText(prev => prev + userPrompt);
-    websocketRef.current.send(JSON.stringify(data));
-    setPrompt('');
-  }, [websocketRef, setOutputText, outputText]);
-
-  const sendPrompt = useCallback((currentPrompt) => {
-    if (!websocketRef.current ||
-      websocketRef.current.readyState
-      === WebSocket.CLOSED) {
-      connectWebsocket();
-    }
-    let currentRequest = {"model": selectedModel, "prompt": currentPrompt, "test_input": testInput};
-    if (websocketRef.current.readyState === WebSocket.CONNECTING) {
-      websocketRef.current.addEventListener('open', () => {
-        sendWSAndUpdateOutput(currentRequest);
-      }, {once: true});
-    } else if (websocketRef.current.readyState === WebSocket.OPEN) {
-      sendWSAndUpdateOutput(currentRequest);
-    }
-  }, [websocketRef, selectedModel, testInput, connectWebsocket, sendWSAndUpdateOutput]);
-
-
-  const sendTestPrompt = useCallback(() => {
-    // noinspection LongLine
-    sendPrompt(TEST_PROMPT);
-  }, [sendPrompt]);
 
   return (
     <Box sx={{
@@ -79,7 +84,7 @@ const ChatPrompt = ({outputText, setOutputText, setOutputCodeText, websocketRef,
       }}>
         <Button onClick={() => sendPrompt(prompt)} variant="contained" sx={{mb: 1}}>Generate</Button>
         <Button onClick={clearConversation} variant="outlined" sx={{mb: 1}}>Clear Conversation</Button>
-        <Button onClick={sendTestPrompt} variant="contained">Test Code</Button>
+        <Button onClick="" variant="contained">Test Code</Button>
       </Box>
     </Box>
   );

@@ -2,7 +2,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import Box from '@mui/material/Box';
 
-import ChatPrompt from './ChatPrompt';
+import ChatPrompt from './OldChatPrompt';
 import ChatOutput from './ChatOutput';
 import {API_CONFIG} from "../config";
 import ModelSelector from "./ModelSelector";

@@ -1,34 +1,17 @@
-from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
-import uuid
-
-Base = declarative_base()
+# conversations.py
+from tortoise.models import Model
+from tortoise import fields
 
 
-class Conversation(Base):
-    __tablename__ = "conversations"
+class Conversation(Model):
+    id = fields.UUIDField(pk=True)
+    model_name = fields.CharField(max_length=255, index=True)
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-        nullable=False,
+
+class Message(Model):
+    id = fields.UUIDField(pk=True)
+    conversation_id = fields.ForeignKeyField(
+        "models.Conversation", related_name="messages"
     )
-    model_name = Column(String, index=True)
-
-
-class Message(Base):
-    __tablename__ = "messages"
-
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-        nullable=False,
-    )
-    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id"))
-    sender = Column(String, index=True)
-    message = Column(String)
+    sender = fields.CharField(max_length=255, index=True)
+    message = fields.TextField()

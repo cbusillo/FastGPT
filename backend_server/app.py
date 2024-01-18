@@ -3,9 +3,9 @@ from fastapi import FastAPI
 
 from components.logger import setup_logger
 from components.middlewares import setup_middlewares
-from database.sqlite import database
 
 from routes import generate, models, conversations
+from database import orm_interface
 
 app = FastAPI()
 setup_middlewares(app)
@@ -17,10 +17,10 @@ app.include_router(conversations.router)
 
 
 @app.on_event("startup")
-async def startup() -> None:
-    await database.connect()
+async def startup_event() -> None:
+    await orm_interface.start()
 
 
 @app.on_event("shutdown")
-async def shutdown() -> None:
-    await database.disconnect()
+async def shutdown_event() -> None:
+    await orm_interface.stop()
