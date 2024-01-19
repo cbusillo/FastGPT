@@ -1,4 +1,6 @@
 # app.py
+import logging
+
 from fastapi import FastAPI
 
 from components.logger import setup_logger
@@ -10,6 +12,7 @@ from database import orm_interface
 app = FastAPI()
 setup_middlewares(app)
 logger = setup_logger()
+logging.basicConfig(level=logging.DEBUG)
 
 app.include_router(generate.router)
 app.include_router(models.router)

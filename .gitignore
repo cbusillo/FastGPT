@@ -189,7 +189,7 @@ cython_debug/
 #.idea/
 
 node_modules
-backend_server/data/hostnames
+fastgpt/data/hostnames
 /models/
-/backend_server/data/
+/fastgpt/data/
 *.db

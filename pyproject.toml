@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "fastgpt"
+version = "0.1.0"
+description = ""
+authors = ["Chris Busillo <info@shinycomputers.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "=3.11.7"
+fastapi = "^0.109.0"
+pylint = "^3.0.3"
+black = "^23.12.1"
+openai = "^1.8.0"
+uvicorn = "^0.26.0"
+websockets = "^12.0"
+python-dotenv = "^1.0.0"
+stdlib-list = "^0.10.0"
+docker = "^7.0.0"
+transformers = "^4.36.2"
+asyncpg = "^0.29.0"
+torch = "^2.1.2"
+tortoise-orm = "^0.20.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

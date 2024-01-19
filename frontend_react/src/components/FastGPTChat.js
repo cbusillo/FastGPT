@@ -20,55 +20,6 @@ const FastGPTChat = () => {
   const [selectedModel, setSelectedModel] = useState('');
   const [testInput, setTestInput] = useState(false);
 
-  const connectWebsocket = useCallback(() => {
-    if (websocketRef.current) {
-      if (websocketRef.current.readyState === WebSocket.OPEN) {
-        console.log('WebSocket is already open.');
-        return;
-      }
-      if (websocketRef.current.readyState === WebSocket.CONNECTING) {
-        console.log('WebSocket is already connecting.');
-        return;
-      }
-    }
-    console.log('Attempting to connect to WebSocket');
-    websocketRef.current = new WebSocket(`ws://${API_CONFIG.BASEURL}/generate`);
-
-    websocketRef.current.onopen = () => {
-      console.log('Connected to websocket');
-    };
-
-    websocketRef.current.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.code) {
-          setOutputCodeText(prev => (prev ? prev + "\n\n" : "") + data.code);
-        } else if (data.response) {
-          setOutputText(prev => prev + data.response);
-        }
-      } catch (error) {
-        setOutputText(prev => prev + event.data);
-      }
-    };
-
-
-    websocketRef.current.onclose = (event) => {
-      console.log('Connection closed', event);
-    };
-
-    websocketRef.current.onerror = (event) => {
-      console.log('Connection error', event);
-      websocketRef.current.close();
-    };
-  }, []);
-
-  useEffect(() => {
-    connectWebsocket();
-    return () => {
-    };
-  }, [connectWebsocket]);
-
   function handleTestInputChange() {
     setTestInput(!testInput);
   }
@@ -97,7 +48,6 @@ const FastGPTChat = () => {
         outputText={outputText} setOutputText={setOutputText}
         setOutputCodeText={setOutputCodeText}
         websocketRef={websocketRef}
-        connectWebsocket={connectWebsocket}
         selectedModel={selectedModel}
         testInput={testInput}
       />

@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from tomlkit import parse
 
+load_dotenv()
 
 class Config:
     def __init__(self) -> None:

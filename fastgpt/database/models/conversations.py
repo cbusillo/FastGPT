@@ -1,4 +1,4 @@
-# conversations.py
+# models/conversations.py
 from tortoise.models import Model
 from tortoise import fields
 
